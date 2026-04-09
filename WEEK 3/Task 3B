@@ -1,0 +1,61 @@
+import serial
+import matplotlib.pyplot as plt
+import keyboard  # pip install keyboard
+import time
+
+# --- Change to match your Arduino COM port ---
+ser = serial.Serial('COM4', 9600, timeout=1)
+time.sleep(2)  # wait for Arduino to reset
+
+# --- Enable interactive live plotting ---
+plt.ion()
+fig, ax = plt.subplots()
+x_vals, y_vals = [], []
+
+print("========================================")
+print(" Real-Time Potentiometer / Servo Plot ")
+print("========================================")
+print("Press 'r' to start/resume the Arduino process.")
+print("Press 's' to stop the Arduino process.")
+print("Close the plot window or press Ctrl+C to exit.\n")
+
+def send_command(key, label, command_byte):
+    """Send 's' or 'r' command once when pressed."""
+    if keyboard.is_pressed(key):
+        ser.write(command_byte)
+        print(f"[Python] {label} command sent to Arduino.")
+        while keyboard.is_pressed(key):
+            pass  # Wait until key is released
+
+try:
+    while True:
+        # --- Handle start/stop commands ---
+        send_command('s', 'Stop', b's')
+        send_command('r', 'Resume', b'r')
+
+        # --- Read serial data from Arduino ---
+        if ser.in_waiting > 0:
+            data = ser.readline().decode(errors='ignore').strip()
+            if data.isdigit():  # ensure it's numeric
+                value = int(data)
+                print(f"[Arduino] Value: {value}")
+
+                # --- Append and plot live data ---
+                x_vals.append(len(x_vals))
+                y_vals.append(value)
+                ax.clear()
+                ax.plot(x_vals, y_vals, color='b', linewidth=2, label='Pot/Servo Value')
+                ax.set_title("Real-Time Potentiometer / Servo Reading")
+                ax.set_xlabel("Sample")
+                ax.set_ylabel("Analog Value / Angle")
+                ax.legend()
+                plt.pause(0.05)  # refresh plot
+
+except KeyboardInterrupt:
+    print("\n[Python] Keyboard interrupt detected. Exiting...")
+
+finally:
+    ser.close()
+    plt.ioff()
+    plt.show()
+    print("[Python] Serial connection closed."
