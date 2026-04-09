@@ -1,0 +1,29 @@
+#include <Wire.h>
+#include <I2Cdev.h>
+#include <MPU6050.h>
+
+MPU6050 mpu;  // default address 0x68
+
+void setup() {
+  Wire.begin();
+  Serial.begin(9600);
+  delay(100);              // let I2C & sensor settle
+
+  mpu.initialize();        // init MPU6050
+  if (!mpu.testConnection()) {
+    Serial.println("MPU6050 connection failed!");
+    while (1);             // stop here if not detected
+  }
+  // ensure sensor is awake (usually handled by initialize)
+  mpu.setSleepEnabled(false);
+}
+
+void loop() {
+  int16_t ax, ay, az;
+  mpu.getAcceleration(&ax, &ay, &az);
+  Serial.print(ax); Serial.print(',');
+  Serial.print(ay); Serial.print(',');
+  Serial.println(az);
+  delay(20);               // ~50 Hz
+}
+}
