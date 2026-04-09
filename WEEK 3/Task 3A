@@ -1,0 +1,18 @@
+void setup() {
+  Serial.begin(9600);
+  pinMode(13, OUTPUT); // set pin 13 as output for LED
+}
+
+void loop() {
+  int potValue = analogRead(A0);
+  Serial.println(potValue);
+
+  // check if potentiometer value reaches half or more
+  if (potValue >= 512) {
+    digitalWrite(13, HIGH); // turn LED ON
+  } else {
+    digitalWrite(13, LOW);  // turn LED OFF
+  }
+
+  delay(1000); // delay to avoid sending data too fast
+}
