@@ -1,0 +1,90 @@
+const int segmentA = 2; // D0
+const int segmentB = 3; // D1
+const int segmentC = 4; // D2
+const int segmentDP = 5; // D3
+const int segmentD = 6; // D4
+const int segmentE = 7; // D5
+const int segmentF = 8; // D6
+const int segmentG = 9; // D6
+
+const int BTN_INC = 10;  // increment (to GND, INPUT_PULLUP)
+const int BTN_RST = 11;  // reset (to GND, INPUT_PULLUP)
+
+
+const unsigned long DEBOUNCE_MS = 50;
+bool lastIncState  = HIGH;  // INPUT_PULLUP: HIGH = not pressed
+bool lastRstState  = HIGH;
+unsigned long lastIncChange = 0;
+unsigned long lastRstChange = 0;
+uint8_t count = 0;          // display counter
+
+
+const uint8_t segMap[10][7] = {
+  /*0*/ {1,1,1,1,1,1,0},
+  /*1*/ {0,1,1,0,0,0,0},
+  /*2*/ {1,1,0,1,1,0,1},
+  /*3*/ {1,1,1,1,0,0,1},
+  /*4*/ {0,1,1,0,0,1,1},
+  /*5*/ {1,0,1,1,0,1,1},
+  /*6*/ {1,0,1,1,1,1,1},
+  /*7*/ {1,1,1,0,0,0,0},
+  /*8*/ {1,1,1,1,1,1,1},
+  /*9*/ {1,1,1,1,0,1,1}
+};
+
+void showDigit(uint8_t d) {
+  if (d > 9) d = 0;
+  digitalWrite(segmentA, segMap[d][0] ? HIGH : LOW);
+  digitalWrite(segmentB, segMap[d][1] ? HIGH : LOW);
+  digitalWrite(segmentC, segMap[d][2] ? HIGH : LOW);
+  digitalWrite(segmentD, segMap[d][3] ? HIGH : LOW);
+  digitalWrite(segmentE, segMap[d][4] ? HIGH : LOW);
+  digitalWrite(segmentF, segMap[d][5] ? HIGH : LOW);
+  digitalWrite(segmentG, segMap[d][6] ? HIGH : LOW);
+  digitalWrite(segmentDP, HIGH); // keep DP ON like your sequence
+}
+
+
+void setup() {
+  // Initialize the digital pins as OUTPUTs
+  pinMode(segmentA, OUTPUT);
+  pinMode(segmentB, OUTPUT);
+  pinMode(segmentC, OUTPUT);
+  pinMode(segmentDP, OUTPUT);
+  pinMode(segmentD, OUTPUT);
+  pinMode(segmentE, OUTPUT);
+  pinMode(segmentF, OUTPUT);
+  pinMode(segmentG, OUTPUT);
+  pinMode(BTN_INC, INPUT_PULLUP);
+  pinMode(BTN_RST, INPUT_PULLUP);
+
+  showDigit(count); // start at 0
+}
+
+void loop() {
+
+  unsigned long now = millis();
+
+  int incRaw = digitalRead(BTN_INC);
+  if (incRaw != lastIncState && (now - lastIncChange) > DEBOUNCE_MS) {
+    lastIncChange = now;
+    lastIncState = incRaw;
+    if (incRaw == LOW) {                 // pressed
+      count = (count + 1) % 10;
+      showDigit(count);
+    }
+  }
+
+  int rstRaw = digitalRead(BTN_RST);
+  if (rstRaw != lastRstState && (now - lastRstChange) > DEBOUNCE_MS) {
+    lastRstChange = now;
+    lastRstState = rstRaw;
+    if (rstRaw == LOW) {                 // pressed
+      count = 0;
+      showDigit(count);
+    }
+  }
+
+  // Small idle to avoid tight loop
+  delay(5);
+}
